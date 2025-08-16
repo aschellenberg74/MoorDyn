@@ -126,6 +126,13 @@ class MoorDyn final : public io::IO
 	 */
 	inline vector<Line*> GetLines() const { return LineList; }
 
+	/**
+	 * @brief Set whether console and file output is disabled.
+	 *
+	 * @param disable
+	 */
+	inline void SetDisableOutput(bool disable) { disableOutput = disable; }
+
 	/** @brief Return the number of coupled Degrees Of Freedom (DOF)
 	 *
 	 * This should match with the number of components of the positions and
@@ -325,7 +332,8 @@ class MoorDyn final : public io::IO
 	 * @param dt The model time step
 	 * @note The CFL will be changed accordingly
 	 */
-	inline void SetDt(real dt) {
+	inline void SetDt(real dt)
+	{
 		this->dtM0 = dt;
 		this->cfl = 0.0;
 		for (auto obj : LineList)
@@ -347,7 +355,8 @@ class MoorDyn final : public io::IO
 	 * @param cfl The CFL
 	 * @note The time step will be changed accordingly
 	 */
-	inline void SetCFL(real cfl) {
+	inline void SetCFL(real cfl)
+	{
 		this->cfl = cfl;
 		this->dtM0 = (std::numeric_limits<real>::max)();
 		for (auto obj : LineList)
@@ -363,13 +372,15 @@ class MoorDyn final : public io::IO
 	/** @brief Get the current time integrator
 	 * @return The time integrator
 	 */
-	inline TimeScheme* GetTimeScheme() const { return _t_integrator; }
+	inline time::Scheme* GetTimeScheme() const { return _t_integrator; }
 
 	/** @brief Set the current time integrator
 	 * @return The time integrator
 	 */
-	inline void SetTimeScheme(TimeScheme* tscheme) {
-		if (_t_integrator) delete _t_integrator;
+	inline void SetTimeScheme(time::Scheme* tscheme)
+	{
+		if (_t_integrator)
+			delete _t_integrator;
 		_t_integrator = tscheme;
 		_t_integrator->SetGround(GroundBody);
 		for (auto obj : BodyList)
@@ -420,33 +431,37 @@ class MoorDyn final : public io::IO
 	 * the input file.
 	 *
 	 * @param inputText a string from the Line Properties section of input file
+	 * @param lineNum the file line number for error messages
 	 * @return The line properties
 	 */
-	LineProps* readLineProps(string inputText);
+	LineProps* readLineProps(string inputText, int lineNum);
 
 	/** @brief Helper function to read a new rod property given a line from
 	 * the input file.
 	 *
 	 * @param inputText a string from the Rod Properties section of input file
+	 * @param lineNum the file line number for error messages
 	 * @return The rod properties
 	 */
-	RodProps* readRodProps(string inputText);
+	RodProps* readRodProps(string inputText, int lineNum);
 
 	/** @brief Helper function to read a new rod given a line from
 	 * the input file.
 	 *
 	 * @param inputText a string from the Rod List section of input file
+	 * @param lineNum the file line number for error messages
 	 * @return The rod object
 	 */
-	Rod* readRod(string inputText);
+	Rod* readRod(string inputText, int lineNum);
 
 	/** @brief Helper function to read a new body given a line from
 	 * the input file.
 	 *
 	 * @param inputText a string from the Body List section of input file
+	 * @param lineNum the file line number for error messages
 	 * @return The body object
 	 */
-	Body* readBody(string inputText);
+	Body* readBody(string inputText, int lineNum);
 
 	/** @brief Helper function to read an option given a line from
 	 * the input file.
@@ -461,9 +476,11 @@ class MoorDyn final : public io::IO
 	 * If a wrong number of entries is provided an error is printed out
 	 * @param entries Provided entries
 	 * @param supposedNumberOfEntries Expected number of entries
+	 * @param lineNum the file line number for error messages
 	 */
 	bool checkNumberOfEntriesInLine(vector<string> entries,
-	                                int supposedNumberOfEntries);
+	                                int supposedNumberOfEntries,
+	                                int lineNum);
 
 	/** @brief Compute an initial condition using the stationary solver
 	 * @see ::ICgenDynamic
@@ -550,6 +567,9 @@ class MoorDyn final : public io::IO
 	real ICthresh;
 	// use dynamic (true) or stationary (false) initial condition solver
 	bool ICgenDynamic;
+	// Load the initial state (before the initial condition solver) from a
+	// file. Empty to do not load it.
+	string ICfile;
 	// temporary wave kinematics flag used to store input value while keeping
 	// env.WaveKin=0 for IC gen
 	moordyn::waves::waves_settings WaveKinTemp;
@@ -562,7 +582,7 @@ class MoorDyn final : public io::IO
 	real dtOut;
 
 	/// The time integration scheme
-	TimeScheme* _t_integrator;
+	time::Scheme* _t_integrator;
 
 	/// General options of the Mooring system
 	EnvCondRef env;
@@ -589,15 +609,6 @@ class MoorDyn final : public io::IO
 	/// array of pointers to line objects
 	vector<moordyn::Line*> LineList;
 
-	/// array of starting indices for Lines in "states" array
-	vector<unsigned int> LineStateIs;
-	/// array of starting indices for independent Points in "states" array
-	vector<unsigned int> PointStateIs;
-	/// array of starting indices for independent Rods in "states" array
-	vector<unsigned int> RodStateIs;
-	/// array of starting indices for Bodies in "states" array
-	vector<unsigned int> BodyStateIs;
-
 	/// vector of free body indices in BodyList vector
 	vector<unsigned int> FreeBodyIs;
 	/// vector of fixed body indices in BodyList vector
@@ -616,16 +627,15 @@ class MoorDyn final : public io::IO
 	/// vector of coupled/fairlead point indices in PointList vector
 	vector<unsigned int> CpldPointIs;
 
-	/// Number of used state vector components
-	unsigned int nX;
-	/// full size of state vector array including extra space for detaching up
-	/// to all line ends, each which could get its own 6-state point
-	/// (nXtra = nX + 6 * 2 * LineList.size())
-	unsigned int nXtra;
-
 	/// number of points that wave kinematics are input at
 	/// (if using env.WaveKin=1)
 	unsigned int npW;
+
+	/// Disabled writing to output files or console when running
+	bool disableOutput = false;
+
+	/// Disabledtime updates to console when running (for MATLAB wrapper)
+	bool disableOutTime = false;
 
 	/// main output file
 	ofstream outfileMain;
@@ -717,7 +727,7 @@ class MoorDyn final : public io::IO
 		while (f.good()) {
 			string fline;
 			getline(f, fline);
-			if (i>2) { // skip first three lines as headers 
+			if (i > 2) { // skip first three lines as headers
 				moordyn::str::rtrim(fline);
 				flines.push_back(fline);
 			}
@@ -740,11 +750,11 @@ class MoorDyn final : public io::IO
 				return MOORDYN_INVALID_INPUT;
 			}
 			x.push_back(atof(entries[0].c_str()));
-			y.push_back(atof(entries[0].c_str()));
+			y.push_back(atof(entries[1].c_str()));
 			LOGDBG << "(" << x.back() << ", " << y.back() << ")" << std::endl;
 		}
 
-		LOGMSG << (i-3) << " lines of curve successfully loaded" << std::endl;
+		LOGMSG << (i - 3) << " lines of curve successfully loaded" << std::endl;
 		return MOORDYN_SUCCESS;
 	}
 
@@ -831,7 +841,7 @@ class MoorDyn final : public io::IO
 	 * @return MOORDYN_SUCCESS if the output is correctly printed, an error
 	 * code otherwise
 	 */
-	moordyn::error_id AllOutput(double t, double dt);
+	moordyn::error_id WriteOutputs(double t, double dt);
 };
 
 } // ::moordyn

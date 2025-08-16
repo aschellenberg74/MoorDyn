@@ -862,6 +862,231 @@ get_fast_tens(PyObject*, PyObject* args)
 	return lst;
 }
 
+/** @brief Wrapper to MoorDyn_GetDt() function
+ * @param args Python passed arguments
+ * @return The time step
+ */
+static PyObject*
+get_dt(PyObject*, PyObject* args)
+{
+	PyObject* capsule;
+
+	if (!PyArg_ParseTuple(args, "O", &capsule))
+		return NULL;
+
+	MoorDyn system =
+	    (MoorDyn)PyCapsule_GetPointer(capsule, moordyn_capsule_name);
+	if (!system)
+		return NULL;
+
+	int err;
+	double dt;
+	err = MoorDyn_GetDt(system, &dt);
+	if (err != 0) {
+		PyErr_SetString(PyExc_RuntimeError, "MoorDyn reported an error");
+		return NULL;
+	}
+	return PyFloat_FromDouble(dt);
+}
+
+/** @brief Wrapper to MoorDyn_SetDt() function
+ * @param args Python passed arguments
+ * @return None
+ */
+static PyObject*
+set_dt(PyObject*, PyObject* args)
+{
+	PyObject* capsule;
+	double dt;
+
+	if (!PyArg_ParseTuple(args, "Od", &capsule, &dt))
+		return NULL;
+
+	MoorDyn system =
+	    (MoorDyn)PyCapsule_GetPointer(capsule, moordyn_capsule_name);
+	if (!system)
+		return NULL;
+
+	const int err = MoorDyn_SetDt(system, dt);
+	if (err != 0) {
+		PyErr_SetString(PyExc_RuntimeError, "MoorDyn reported an error");
+		return NULL;
+	}
+	return Py_None;
+}
+
+/** @brief Wrapper to MoorDyn_GetCFL() function
+ * @param args Python passed arguments
+ * @return The time step
+ */
+static PyObject*
+get_cfl(PyObject*, PyObject* args)
+{
+	PyObject* capsule;
+
+	if (!PyArg_ParseTuple(args, "O", &capsule))
+		return NULL;
+
+	MoorDyn system =
+	    (MoorDyn)PyCapsule_GetPointer(capsule, moordyn_capsule_name);
+	if (!system)
+		return NULL;
+
+	int err;
+	double cfl;
+	err = MoorDyn_GetCFL(system, &cfl);
+	if (err != 0) {
+		PyErr_SetString(PyExc_RuntimeError, "MoorDyn reported an error");
+		return NULL;
+	}
+	return PyFloat_FromDouble(cfl);
+}
+
+/** @brief Wrapper to MoorDyn_SetCFL() function
+ * @param args Python passed arguments
+ * @return None
+ */
+static PyObject*
+set_cfl(PyObject*, PyObject* args)
+{
+	PyObject* capsule;
+	double cfl;
+
+	if (!PyArg_ParseTuple(args, "Od", &capsule, &cfl))
+		return NULL;
+
+	MoorDyn system =
+	    (MoorDyn)PyCapsule_GetPointer(capsule, moordyn_capsule_name);
+	if (!system)
+		return NULL;
+
+	const int err = MoorDyn_SetCFL(system, cfl);
+	if (err != 0) {
+		PyErr_SetString(PyExc_RuntimeError, "MoorDyn reported an error");
+		return NULL;
+	}
+	return Py_None;
+}
+
+/** @brief Wrapper to MoorDyn_GetTimeScheme() function
+ * @param args Python passed arguments
+ * @return The time step
+ */
+static PyObject*
+get_tscheme(PyObject*, PyObject* args)
+{
+	PyObject* capsule;
+
+	if (!PyArg_ParseTuple(args, "O", &capsule))
+		return NULL;
+
+	MoorDyn system =
+	    (MoorDyn)PyCapsule_GetPointer(capsule, moordyn_capsule_name);
+	if (!system)
+		return NULL;
+
+	// We need to know the length of the name first
+	int err;
+	size_t name_len;
+	err = MoorDyn_GetTimeScheme(system, NULL, &name_len);
+	if (err != 0) {
+		PyErr_SetString(PyExc_RuntimeError, "MoorDyn reported an error");
+		return NULL;
+	}
+	// So we can allocate the name and ask for it
+	char* name = (char*)malloc(name_len * sizeof(char));
+	if (!name) {
+		PyErr_SetString(PyExc_RuntimeError, "Failure allocating memory");
+		return NULL;
+	}
+	err = MoorDyn_GetTimeScheme(system, name, &name_len);
+	if (err != 0) {
+		PyErr_SetString(PyExc_RuntimeError, "MoorDyn reported an error");
+		return NULL;
+	}
+	PyObject* out = PyUnicode_FromString(name);
+	free(name);
+	return out;
+}
+
+/** @brief Wrapper to MoorDyn_SetTimeScheme() function
+ * @param args Python passed arguments
+ * @return None
+ */
+static PyObject*
+set_tscheme(PyObject*, PyObject* args)
+{
+	PyObject* capsule;
+	char* tscheme = NULL;
+
+	if (!PyArg_ParseTuple(args, "Os", &capsule, &tscheme))
+		return NULL;
+
+	MoorDyn system =
+	    (MoorDyn)PyCapsule_GetPointer(capsule, moordyn_capsule_name);
+	if (!system)
+		return NULL;
+
+	const int err = MoorDyn_SetTimeScheme(system, tscheme);
+	if (err != 0) {
+		PyErr_SetString(PyExc_RuntimeError, "MoorDyn reported an error");
+		return NULL;
+	}
+	return Py_None;
+}
+
+/** @brief Wrapper to MoorDyn_SaveState() function
+ * @param args Python passed arguments
+ * @return None
+ */
+static PyObject*
+save_state(PyObject*, PyObject* args)
+{
+	PyObject* capsule;
+	char* filepath = NULL;
+
+	if (!PyArg_ParseTuple(args, "Os", &capsule, &filepath))
+		return NULL;
+
+	MoorDyn system =
+	    (MoorDyn)PyCapsule_GetPointer(capsule, moordyn_capsule_name);
+	if (!system)
+		return NULL;
+
+	const int err = MoorDyn_SaveState(system, filepath);
+	if (err != 0) {
+		PyErr_SetString(PyExc_RuntimeError, "MoorDyn reported an error");
+		return NULL;
+	}
+	return Py_None;
+}
+
+/** @brief Wrapper to MoorDyn_LoadState() function
+ * @param args Python passed arguments
+ * @return None
+ */
+static PyObject*
+load_state(PyObject*, PyObject* args)
+{
+	PyObject* capsule;
+	char* filepath = NULL;
+
+	if (!PyArg_ParseTuple(args, "Os", &capsule, &filepath))
+		return NULL;
+
+	MoorDyn system =
+	    (MoorDyn)PyCapsule_GetPointer(capsule, moordyn_capsule_name);
+	if (!system)
+		return NULL;
+
+	const int err = MoorDyn_LoadState(system, filepath);
+	if (err != 0) {
+		PyErr_SetString(PyExc_RuntimeError, "MoorDyn reported an error");
+		return NULL;
+	}
+	return Py_None;
+}
+
 /** @brief Wrapper to MoorDyn_Serialize() function
  * @param args Python passed arguments
  * @return The bytes array
@@ -1030,15 +1255,15 @@ waves_getkin(PyObject*, PyObject* args)
 
 	MoorDynSeafloor seabed = NULL;
 	if (seafloor != Py_None) {
-		seabed = (MoorDynSeafloor)PyCapsule_GetPointer(
-			seafloor, seafloor_capsule_name);
+		seabed = (MoorDynSeafloor)PyCapsule_GetPointer(seafloor,
+		                                               seafloor_capsule_name);
 		if (!seabed)
 			return NULL;
 	}
 
 	double u[3], ud[3], zeta, pdyn;
-	const int err = MoorDyn_GetWavesKin(
-		instance, x, y, z, u, ud, &zeta, &pdyn, seabed);
+	const int err =
+	    MoorDyn_GetWavesKin(instance, x, y, z, u, ud, &zeta, &pdyn, seabed);
 	if (err != 0) {
 		PyErr_SetString(PyExc_RuntimeError, "MoorDyn reported an error");
 		return NULL;
@@ -2657,7 +2882,6 @@ line_get_node_m(PyObject*, PyObject* args)
 	return lst;
 }
 
-
 /** @brief Wrapper to MoorDyn_GetLineFairTen() function
  * @param args Python passed arguments
  * @return The tension magnitude
@@ -2766,10 +2990,7 @@ static PyMethodDef moordyn_methods[] = {
 	  METH_VARARGS,
 	  "deallocates the variables used by MoorDyn" },
 	{ "get_waves", get_waves, METH_VARARGS, "Get the waves manager instance" },
-	{ "get_seafloor",
-	   get_seafloor,
-	   METH_VARARGS,
-	   "Get the seafloor instance" },
+	{ "get_seafloor", get_seafloor, METH_VARARGS, "Get the seafloor instance" },
 	{ "ext_wave_init",
 	  ext_wave_init,
 	  METH_VARARGS,
@@ -2808,6 +3029,14 @@ static PyMethodDef moordyn_methods[] = {
 	  get_fast_tens,
 	  METH_VARARGS,
 	  "Get vertical and horizontal forces in the mooring lines" },
+	{ "get_dt", get_dt, METH_VARARGS, "Get the inner time step" },
+	{ "set_dt", set_dt, METH_VARARGS, "Set the inner time step" },
+	{ "get_cfl", get_cfl, METH_VARARGS, "Get the CFL factor" },
+	{ "set_cfl", set_cfl, METH_VARARGS, "Set the CFL factor" },
+	{ "get_tscheme", get_tscheme, METH_VARARGS, "Get the time scheme" },
+	{ "set_tscheme", set_tscheme, METH_VARARGS, "Set the time scheme" },
+	{ "save_state", save_state, METH_VARARGS, "Save the system state" },
+	{ "load_state", load_state, METH_VARARGS, "Load the system state" },
 	{ "serialize",
 	  serialize,
 	  METH_VARARGS,
@@ -2841,7 +3070,10 @@ static PyMethodDef moordyn_methods[] = {
 	{ "body_get_pos", body_get_pos, METH_VARARGS, "Get the body pos" },
 	{ "body_get_angle", body_get_angle, METH_VARARGS, "Get the body angle" },
 	{ "body_get_vel", body_get_vel, METH_VARARGS, "Get the body velocity" },
-	{ "body_get_angvel", body_get_angvel, METH_VARARGS, "Get the body ang vel" },
+	{ "body_get_angvel",
+	  body_get_angvel,
+	  METH_VARARGS,
+	  "Get the body ang vel" },
 	{ "body_get_force", body_get_force, METH_VARARGS, "Get the body force" },
 	{ "body_get_m", body_get_m, METH_VARARGS, "Get the body mass" },
 	{ "body_save_vtk",
@@ -2871,18 +3103,9 @@ static PyMethodDef moordyn_methods[] = {
 	  "Save a .vtp file of the rod" },
 	{ "point_get_id", point_get_id, METH_VARARGS, "Get the point id" },
 	{ "point_get_type", point_get_type, METH_VARARGS, "Get the point type" },
-	{ "point_get_pos",
-	  point_get_pos,
-	  METH_VARARGS,
-	  "Get the point position" },
-	{ "point_get_vel",
-	  point_get_vel,
-	  METH_VARARGS,
-	  "Get the point velocity" },
-	{ "point_get_force",
-	  point_get_force,
-	  METH_VARARGS,
-	  "Get the point force" },
+	{ "point_get_pos", point_get_pos, METH_VARARGS, "Get the point position" },
+	{ "point_get_vel", point_get_vel, METH_VARARGS, "Get the point velocity" },
+	{ "point_get_force", point_get_force, METH_VARARGS, "Get the point force" },
 	{ "point_get_m", point_get_m, METH_VARARGS, "Get the point mass matrix" },
 	{ "point_get_nattached",
 	  point_get_nattached,

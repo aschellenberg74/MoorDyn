@@ -29,7 +29,7 @@ The main difference between MoorDyn-C and MoorDyn-F is that MoorDyn-C uses quate
 Orientation of 6 DOF objects:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-MoorDyn-C, MoorDyn-F and `MoorPy <https://github.com/NREL/MoorPy>`_ share the
+MoorDyn-C, MoorDyn-F, and `MoorPy <https://github.com/NREL/MoorPy>`_ share the
 same Intrinsic Euler-XYZ (Tait-Bryan) angles criteria to compute orientations.
 You can learn more about this on
 `Hall M. Generalized Quasi-Static Mooring System Modeling with Analytic Jacobians. Energies. 2024; 17(13):3155. https://doi.org/10.3390/en17133155 <https://www.mdpi.com/1996-1073/17/13/3155>`_
@@ -51,7 +51,7 @@ Version 1
 The v1 lumped-mass formulation of MoorDyn as well as its validation against experiments:
 
   `M. Hall and A. Goupee, “Validation of a lumped-mass mooring line model with DeepCwind semisubmersible model test data,” 
-  Ocean Engineering, vol. 104, pp. 590–603, Aug. 2015.' <http://www.sciencedirect.com/science/article/pii/S0029801815002279>`_
+  Ocean Engineering, vol. 104, pp. 590–603, Aug. 2015. <http://www.sciencedirect.com/science/article/pii/S0029801815002279>`_
 
 Coupling with WEC-Sim or any Simulink code for wave energy converter simulation:
 
@@ -102,11 +102,16 @@ Viscoelastic approach for non-linear rope behavior:
   `Hall, Matthew, Brian Duong, and Ericka Lozon, “Streamlined Loads Analysis of Floating Wind Turbines With Fiber Rope Mooring Lines.” In ASME 2023 
   5th International Offshore Wind Technical Conference, V001T01A029. Exeter, UK: American Society of Mechanical Engineers, 2023. <https://doi.org/10.1115/IOWTC2023-119524>`_
 
+Updated MoorDyn-OpenFOAM Coupling:
+  `Haifei Chen, Tanausú Almeida Medina, and Jose Luis Cercos-Pita, "CFD simulation of multiple moored floating structures using OpenFOAM: An open-access mooring restraints 
+  library." Ocean Engineering, vol. 303, Jul. 2024. <https://doi.org/10.1016/j.oceaneng.2024.117697>`_
+
+
 The Fortran version of MoorDyn is available as a module inside of OpenFAST:
   
   https://openfast.readthedocs.io/en/main/
 
-Dynamics of 6DOF objects follows a similar approach to Hydrodyn:
+Hydrodynamics of 6DOF objects follows a similar approach to Hydrodyn:
 
   https://www.nrel.gov/wind/nwtc/assets/downloads/HydroDyn/HydroDyn_Manual.pdf
 

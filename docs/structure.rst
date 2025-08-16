@@ -76,6 +76,7 @@ Specific to each Line:
 - *Cat*: real axial added mass coefficient
 - *Cdn*: real normal drag coefficient w/r/t frontal area
 - *Cdt*: real axial drag coefficient w/r/t surface area
+- *Cl*: real VIV cross-flow lift coefficient
 - *BAin*: real axial-internal damping
 - *A*: real cross sectional area
 - *nEApoints*: number of values in stress-strain lookup table
@@ -242,7 +243,9 @@ describe its direction vector. This case is meant for making cantilever points o
 bending stiffness. A fixed zero-length rod can be used to make a cantilever point of a power cable 
 to the ground, a body, or a coupling point. A free zero-length rod can be used to join two 
 different types of power cable segments, and it will pass moments between the cable segments 
-without adding any mass or other characteristics.
+without adding any mass or other characteristics. In this case, the two cables being joined need 
+to be attached to end A and end B respectively (with the rod unit vector pointing from the first to 
+the second cable).
 
 Rod objects have the following variables:
 

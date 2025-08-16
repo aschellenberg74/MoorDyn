@@ -39,6 +39,9 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <iostream>
+#include <fstream>
+#include <tuple>
 #ifdef USE_VTK
 #include <vtkSmartPointer.h>
 #include <vtkCharArray.h>
@@ -59,7 +62,7 @@ namespace io {
  * @note Since this class already publicly inherits moordyn::LogUser, all the
  * classes inheriting this class do not require inheriting also LogUser
  */
-class IO : public LogUser
+class DECLDIR IO : public LogUser
 {
   public:
 	/** @brief Costructor
@@ -69,14 +72,14 @@ class IO : public LogUser
 
 	/** @brief Destructor
 	 */
-	~IO();
+	virtual ~IO() = default;
 
 	/** @brief Save the entity into a file
 	 *
-	 * It is of course possible to save each entity in a separate file. However,
-	 * since this function is just redirecting the work to save(void), which
-	 * might produce the data to save recursively, actually the whole system
-	 * can be saved in the same file
+	 * It is of course possible to save each entity in a separate file.
+	 * However, since this function is just redirecting the work to save(void),
+	 * which might produce the data to save recursively, actually the whole
+	 * system can be saved in the same file
 	 * @param filepath The output file path
 	 */
 	void Save(const std::string filepath);
@@ -108,6 +111,18 @@ class IO : public LogUser
 	virtual uint64_t* Deserialize(const uint64_t* data) = 0;
 
   protected:
+	/** @brief Create an output file and write the MoorDyn magic header
+	 * @param filepath The output file path
+	 */
+	ofstream MakeFile(const std::string filepath) const;
+
+	/** @brief Open an input file and load the data
+	 * @param filepath The input file path
+	 * @return the size of the data into the file and the allocated memory
+	 * with the data inside. Remember to call free() on the returned pointer
+	 */
+	std::tuple<uint64_t, uint64_t*> LoadFile(const std::string filepath) const;
+
 	/** @brief Pack an unsigned integer to make it writable
 	 * @param i The unsigned integer number
 	 * @return The packed number
@@ -192,6 +207,27 @@ class IO : public LogUser
 	 */
 	std::vector<uint64_t> Serialize(const std::vector<mat6>& l);
 
+	/** @brief Pack an arbitrarily large matrix
+	 * @param l The matrix
+	 * @return The packed list
+	 */
+	inline std::vector<uint64_t> Serialize(
+	    const Eigen::Matrix<real, Eigen::Dynamic, Eigen::Dynamic>& l)
+	{
+		std::vector<uint64_t> data;
+		const uint64_t n = l.rows();
+		const uint64_t m = l.cols();
+		data.reserve(2 + n * m);
+		data.push_back(Serialize(n));
+		data.push_back(Serialize(m));
+		for (uint64_t i = 0; i < n; i++) {
+			for (uint64_t j = 0; j < m; j++) {
+				data.push_back(Serialize(l(i, j)));
+			}
+		}
+		return data;
+	}
+
 	/** @brief Pack a list of lists to make it writable
 	 * This function might act recursively
 	 * @param l The list
@@ -204,7 +240,7 @@ class IO : public LogUser
 		const uint64_t n = l.size();
 		data.push_back(Serialize(n));
 		for (auto v : l) {
-			auto subdata = Serialize(v);
+			std::vector<uint64_t> subdata = Serialize(v);
 			data.insert(data.end(), subdata.begin(), subdata.end());
 		}
 		return data;
@@ -307,6 +343,29 @@ class IO : public LogUser
 	 * @return The new pointer to the remaining data to be read
 	 */
 	uint64_t* Deserialize(const uint64_t* in, std::vector<mat6>& out);
+
+	/** @brief Unpack an arbitrarily large matrix
+	 * @param in The pointer to the next unread value
+	 * @param out The unpacked vector
+	 * @return The new pointer to the remaining data to be read
+	 */
+	uint64_t* Deserialize(
+	    const uint64_t* in,
+	    Eigen::Matrix<real, Eigen::Dynamic, Eigen::Dynamic>& out)
+	{
+		uint64_t* remaining;
+		uint64_t n, m;
+		remaining = Deserialize(in, n);
+		remaining = Deserialize(remaining, m);
+		if ((out.rows() != n) || (out.cols() != m))
+			out.resize(n, m);
+		for (unsigned int i = 0; i < n; i++) {
+			for (unsigned int j = 0; j < m; j++) {
+				remaining = Deserialize(remaining, out(i, j));
+			}
+		}
+		return remaining;
+	}
 
 	/** @brief Unpack a loaded list of lists
 	 *

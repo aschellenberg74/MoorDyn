@@ -42,7 +42,7 @@ Seafloor::setup(EnvCondRef env, const string& filepath)
 	if (env->SeafloorMode == moordyn::SEAFLOOR_3D) {
 		LOGDBG << "Seafloor set to 3D mode.";
 		// const string SeafloorFilename =
-		//     (string)folder + "/seafloor_profile_3d.txt";
+		//     (string)folder + "seafloor_profile_3d.txt";
 		LOGMSG << "Reading seafloor from " << filepath << '\n';
 
 		vector<string> fLines; // Buffer to load file into line-by-line
@@ -51,7 +51,7 @@ Seafloor::setup(EnvCondRef env, const string& filepath)
 		try {
 			fLines = moordyn::fileIO::fileToLines(filepath);
 
-		} catch (std::exception& err) {
+		} catch (std::exception) {
 			LOGERR << "Cannot read the file " << filepath << '\n';
 			throw moordyn::input_file_error("Failure reading depths file");
 		}
